@@ -17,7 +17,6 @@ const UPLOAD_DIR = path.join(__dirname, "uploads");
 /* ================= MIDDLEWARE ================= */
 
 app.use(cors({ origin: "*" }));
-
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -81,7 +80,6 @@ function safeRequire(routePath) {
 
 /* ================= ROUTES ================= */
 
-// (same as your original — untouched)
 const candidateRoutes = safeRequire("./routes/candidateRoutes");
 const candidateDashboardRoutes = safeRequire("./routes/candidateDashboardRoutes");
 const assessmentRoutes = safeRequire("./routes/assessmentRoutes");
@@ -110,8 +108,9 @@ const interviewRoutes = safeRequire("./routes/interviewAPI");
 const monitorRoutes = safeRequire("./routes/monitorRoutes");
 const fullProcessRoutes = safeRequire("./routes/fullProcessRoutes");
 
-const orchestratorRoute = safeRequire("./routes/orchestratorRoute");
-const hrDecisionRoute = safeRequire("./routes/hrDecisionRoute");
+/* ❌ DISABLED (Supabase required routes) */
+// const orchestratorRoute = safeRequire("./routes/orchestratorRoute");
+// const hrDecisionRoute = safeRequire("./routes/hrDecisionRoute");
 
 /* ================= USE ROUTES ================= */
 
@@ -144,8 +143,9 @@ if (jobApiRoute) {
   console.log("💼 Jobs API Active");
 }
 
-if (orchestratorRoute) app.use("/api/ai", orchestratorRoute);
-if (hrDecisionRoute) app.use("/api/hr", hrDecisionRoute);
+/* ❌ DISABLED USE */
+// if (orchestratorRoute) app.use("/api/ai", orchestratorRoute);
+// if (hrDecisionRoute) app.use("/api/hr", hrDecisionRoute);
 
 if (authRoutes) app.use("/api/auth", authRoutes);
 if (jobRoutes) app.use("/api/jobs", jobRoutes);
@@ -162,14 +162,12 @@ if (fullProcessRoutes) {
 
 if (monitorRoutes) app.use("/api/monitor", monitorRoutes);
 
-/* ================= ROOT FIX ================= */
+/* ================= ROOT ================= */
 
 app.get("/", (req, res) => {
   if (fs.existsSync(path.join(PUBLIC_PATH, "index.html"))) {
     return res.sendFile(path.join(PUBLIC_PATH, "index.html"));
   }
-
-  // fallback if no frontend
   res.send("🚀 Zentro AI Backend Running");
 });
 

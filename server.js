@@ -54,7 +54,7 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 
 app.use("/uploads", express.static(UPLOAD_DIR));
 
-/* ================= STATIC ================= */
+/* ================= STATIC FRONTEND ================= */
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -63,7 +63,6 @@ app.use(express.static(path.join(__dirname, "public")));
 function safeRequire(routePath) {
   try {
     const route = require(routePath);
-
     if (!route) throw new Error("Empty export");
 
     console.log("✅ Loaded:", routePath);
@@ -91,20 +90,20 @@ const aiRoutes = safeRequire("./routes/aiRoutes");
 const chatRoutes = safeRequire("./routes/chatRoutes");
 const aiScoreRoute = safeRequire("./routes/aiScoreRoute");
 
-// 🤖 AI AGENT
+// AI AGENT
 const agentRoute = safeRequire("./routes/agentRoute");
 
-// 📧 EMAIL SYSTEM
+// EMAIL
 const emailRoutes = safeRequire("./routes/emailRoutes");
 
-// 🔥 JOB API (NEW)
+// JOB API
 const jobApiRoute = safeRequire("./routes/jobApiRoute");
 
 // ADVANCED
 const authRoutes = safeRequire("./routes/authRoutes");
 const jobRoutes = safeRequire("./routes/jobRoutes");
 
-// MATCH ENGINE
+// MATCH
 const matchRoutes = safeRequire("./routes/matchRoutes");
 
 // RESUME + INTERVIEW
@@ -115,7 +114,7 @@ const interviewRoutes = safeRequire("./routes/interviewAPI");
 const monitorRoutes = safeRequire("./routes/monitorRoutes");
 const fullProcessRoutes = safeRequire("./routes/fullProcessRoutes");
 
-// EXISTING ADVANCED
+// ORCHESTRATOR
 const orchestratorRoute = safeRequire("./routes/orchestratorRoute");
 const hrDecisionRoute = safeRequire("./routes/hrDecisionRoute");
 
@@ -137,28 +136,28 @@ if (aiRoutes) app.use("/api/ai", aiRoutes);
 if (chatRoutes) app.use("/api/chat", chatRoutes);
 if (aiScoreRoute) app.use("/api/ai", aiScoreRoute);
 
-// 🤖 AI AGENT
+// AGENT
 if (agentRoute) {
   app.use("/api/agent", agentRoute);
   console.log("🤖 AI Agent System Active");
 }
 
-// 📧 EMAIL
+// EMAIL
 if (emailRoutes) {
   app.use("/api/ai", emailRoutes);
   console.log("📧 Email Automation Enabled");
 }
 
-// 🔥 JOBS API (NEW)
+// JOB API
 if (jobApiRoute) {
   app.use("/api/jobs-api", jobApiRoute);
   console.log("💼 Jobs API Active");
 }
 
-// 🔥 ORCHESTRATOR
+// ORCHESTRATOR
 if (orchestratorRoute) app.use("/api/ai", orchestratorRoute);
 
-// 🔥 HR PANEL
+// HR
 if (hrDecisionRoute) app.use("/api/hr", hrDecisionRoute);
 
 // ADVANCED
@@ -184,35 +183,21 @@ if (monitorRoutes) app.use("/api/monitor", monitorRoutes);
 /* ================= HEALTH ================= */
 
 app.get("/", (req, res) => {
-  res.json({
-    message: "🚀 ZENTRO AI BACKEND RUNNING",
-    version: "6.0 AI + JOB ENGINE",
-    status: "OK",
-  });
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 /* ================= TEST ================= */
 
 app.get("/api/test", (req, res) => {
-  res.json({
-    message: "API working ✅",
-  });
+  res.json({ message: "API working ✅" });
 });
-
-/* ================= AGENT HEALTH ================= */
 
 app.get("/api/agent/health", (req, res) => {
-  res.json({
-    message: "🤖 AI Agent Running",
-  });
+  res.json({ message: "🤖 AI Agent Running" });
 });
 
-/* ================= JOB TEST ================= */
-
 app.get("/api/jobs-test", (req, res) => {
-  res.json({
-    message: "💼 Jobs API Ready",
-  });
+  res.json({ message: "💼 Jobs API Ready" });
 });
 
 /* ================= 404 ================= */
@@ -246,16 +231,6 @@ const server = app.listen(PORT, () => {
   console.log("=================================");
 });
 
-/* ================= HANDLE CRASH ================= */
-
-process.on("uncaughtException", (err) => {
-  console.error("❌ Uncaught Exception:", err.message);
-});
-
-process.on("unhandledRejection", (err) => {
-  console.error("❌ Unhandled Rejection:", err);
-});
-
 /* ================= GRACEFUL SHUTDOWN ================= */
 
 process.on("SIGINT", () => {
@@ -263,4 +238,14 @@ process.on("SIGINT", () => {
   server.close(() => {
     process.exit(0);
   });
+});
+
+/* ================= CRASH HANDLING ================= */
+
+process.on("uncaughtException", (err) => {
+  console.error("❌ Uncaught Exception:", err.message);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("❌ Unhandled Rejection:", err);
 });

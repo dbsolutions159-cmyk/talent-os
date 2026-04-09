@@ -1,0 +1,28 @@
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const candidateId = urlParams.get("id");
+
+// SAVE ANSWERS
+async function submitTest() {
+
+  const answers = {
+    q1: "sample answer"
+  };
+
+  const res = await fetch("/api/assessment/submit", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      candidateId,
+      answers,
+      time_taken: 40
+    })
+  });
+
+  const data = await res.json();
+
+  alert("Result: " + data.result);
+}
+</script>

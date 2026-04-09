@@ -1,0 +1,8 @@
+body { display:flex; background:#0f172a; color:white; }
+.sidebar { width:200px; padding:20px; }
+.main { flex:1; }
+
+#chat { height:80vh; overflow:auto; }
+
+.user { text-align:right; }
+.ai { text-align:left; }

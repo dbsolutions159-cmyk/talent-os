@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Candidate Dashboard</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    .status {
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+
+    .SELECTED { background: green; }
+    .REJECTED { background: red; }
+    .SHORTLISTED { background: orange; }
+
+  </style>
+</head>
+
+<body>
+
+<h1>🚀 Candidate Dashboard</h1>
+
+<div class="card" id="profile"></div>
+<div class="card" id="score"></div>
+<div class="card" id="timeline"></div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+async function loadDashboard() {
+
+  const res = await fetch(`/api/candidate/dashboard/${id}`);
+  const data = await res.json();
+
+  if (!data.success) {
+    alert("Invalid Candidate");
+    return;
+  }
+
+  // PROFILE
+  document.getElementById("profile").innerHTML = `
+    <h2>👤 Profile</h2>
+    Name: ${data.profile.name} <br>
+    Email: ${data.profile.email} <br>
+    Role: ${data.profile.role}
+  `;
+
+  // SCORE
+  document.getElementById("score").innerHTML = `
+    <h2>📊 Result</h2>
+    Score: ${data.score} <br>
+    Trust: ${data.trust} <br>
+    Status: <span class="status ${data.result}">${data.result}</span>
+  `;
+
+  // TIMELINE
+  let timelineHTML = "<h2>📍 Progress</h2>";
+
+  data.timeline.forEach(t => {
+    timelineHTML += `<p>${t.step} → ${t.status}</p>`;
+  });
+
+  document.getElementById("timeline").innerHTML = timelineHTML;
+}
+
+loadDashboard();
+
+</script>
+
+</body>
+</html>

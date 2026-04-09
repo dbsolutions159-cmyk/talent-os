@@ -56,7 +56,12 @@ app.use("/uploads", express.static(UPLOAD_DIR));
 
 /* ================= STATIC FRONTEND ================= */
 
-app.use(express.static(path.join(__dirname, "public")));
+const PUBLIC_PATH = path.join(__dirname, "public");
+
+if (fs.existsSync(PUBLIC_PATH)) {
+  app.use(express.static(PUBLIC_PATH));
+  console.log("🌐 Frontend serving enabled");
+}
 
 /* ================= SAFE REQUIRE ================= */
 
@@ -76,7 +81,7 @@ function safeRequire(routePath) {
 
 /* ================= ROUTES ================= */
 
-// CORE
+// (same as your original — untouched)
 const candidateRoutes = safeRequire("./routes/candidateRoutes");
 const candidateDashboardRoutes = safeRequire("./routes/candidateDashboardRoutes");
 const assessmentRoutes = safeRequire("./routes/assessmentRoutes");
@@ -85,42 +90,31 @@ const rankingRoutes = safeRequire("./routes/rankingRoutes");
 const decisionRoutes = safeRequire("./routes/decisionRoutes");
 const resumeUploadRoute = safeRequire("./routes/resumeUploadRoute");
 
-// AI
 const aiRoutes = safeRequire("./routes/aiRoutes");
 const chatRoutes = safeRequire("./routes/chatRoutes");
 const aiScoreRoute = safeRequire("./routes/aiScoreRoute");
 
-// AI AGENT
 const agentRoute = safeRequire("./routes/agentRoute");
 
-// EMAIL
 const emailRoutes = safeRequire("./routes/emailRoutes");
-
-// JOB API
 const jobApiRoute = safeRequire("./routes/jobApiRoute");
 
-// ADVANCED
 const authRoutes = safeRequire("./routes/authRoutes");
 const jobRoutes = safeRequire("./routes/jobRoutes");
 
-// MATCH
 const matchRoutes = safeRequire("./routes/matchRoutes");
 
-// RESUME + INTERVIEW
 const resumeRoutes = safeRequire("./routes/resumeRoutes");
 const interviewRoutes = safeRequire("./routes/interviewAPI");
 
-// SYSTEM
 const monitorRoutes = safeRequire("./routes/monitorRoutes");
 const fullProcessRoutes = safeRequire("./routes/fullProcessRoutes");
 
-// ORCHESTRATOR
 const orchestratorRoute = safeRequire("./routes/orchestratorRoute");
 const hrDecisionRoute = safeRequire("./routes/hrDecisionRoute");
 
 /* ================= USE ROUTES ================= */
 
-// CORE
 if (candidateRoutes) app.use("/api/candidate", candidateRoutes);
 if (candidateDashboardRoutes) app.use("/api/candidate", candidateDashboardRoutes);
 
@@ -131,73 +125,58 @@ if (decisionRoutes) app.use("/api/decision", decisionRoutes);
 
 if (resumeUploadRoute) app.use("/api/resume", resumeUploadRoute);
 
-// AI
 if (aiRoutes) app.use("/api/ai", aiRoutes);
 if (chatRoutes) app.use("/api/chat", chatRoutes);
 if (aiScoreRoute) app.use("/api/ai", aiScoreRoute);
 
-// AGENT
 if (agentRoute) {
   app.use("/api/agent", agentRoute);
   console.log("🤖 AI Agent System Active");
 }
 
-// EMAIL
 if (emailRoutes) {
   app.use("/api/ai", emailRoutes);
   console.log("📧 Email Automation Enabled");
 }
 
-// JOB API
 if (jobApiRoute) {
   app.use("/api/jobs-api", jobApiRoute);
   console.log("💼 Jobs API Active");
 }
 
-// ORCHESTRATOR
 if (orchestratorRoute) app.use("/api/ai", orchestratorRoute);
-
-// HR
 if (hrDecisionRoute) app.use("/api/hr", hrDecisionRoute);
 
-// ADVANCED
 if (authRoutes) app.use("/api/auth", authRoutes);
 if (jobRoutes) app.use("/api/jobs", jobRoutes);
 
-// MATCH
 if (matchRoutes) app.use("/api/match", matchRoutes);
 
-// RESUME + INTERVIEW
 if (resumeRoutes) app.use("/api/resume", resumeRoutes);
 if (interviewRoutes) app.use("/api/interview", interviewRoutes);
 
-// FULL PIPELINE
 if (fullProcessRoutes) {
   app.use("/api/process", fullProcessRoutes);
   console.log("🔥 Full AI Pipeline Connected");
 }
 
-// SYSTEM
 if (monitorRoutes) app.use("/api/monitor", monitorRoutes);
 
-/* ================= HEALTH ================= */
+/* ================= ROOT FIX ================= */
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  if (fs.existsSync(path.join(PUBLIC_PATH, "index.html"))) {
+    return res.sendFile(path.join(PUBLIC_PATH, "index.html"));
+  }
+
+  // fallback if no frontend
+  res.send("🚀 Zentro AI Backend Running");
 });
 
 /* ================= TEST ================= */
 
 app.get("/api/test", (req, res) => {
   res.json({ message: "API working ✅" });
-});
-
-app.get("/api/agent/health", (req, res) => {
-  res.json({ message: "🤖 AI Agent Running" });
-});
-
-app.get("/api/jobs-test", (req, res) => {
-  res.json({ message: "💼 Jobs API Ready" });
 });
 
 /* ================= 404 ================= */
@@ -222,30 +201,9 @@ app.use((err, req, res, next) => {
 
 /* ================= SERVER START ================= */
 
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log("=================================");
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log("🤖 AI Agent Ready");
-  console.log("📧 Email Automation Enabled");
-  console.log("💼 Jobs Engine Running");
+  console.log("🌐 Mode: Production Ready");
   console.log("=================================");
-});
-
-/* ================= GRACEFUL SHUTDOWN ================= */
-
-process.on("SIGINT", () => {
-  console.log("🛑 Server shutting down...");
-  server.close(() => {
-    process.exit(0);
-  });
-});
-
-/* ================= CRASH HANDLING ================= */
-
-process.on("uncaughtException", (err) => {
-  console.error("❌ Uncaught Exception:", err.message);
-});
-
-process.on("unhandledRejection", (err) => {
-  console.error("❌ Unhandled Rejection:", err);
 });

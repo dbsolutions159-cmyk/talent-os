@@ -3,7 +3,6 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const fs = require("fs");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const nodemailer = require("nodemailer");
@@ -13,12 +12,12 @@ const app = express();
 /* ================= CONFIG ================= */
 
 const PORT = process.env.PORT || 5000;
-const PUBLIC_PATH = path.join(__dirname, "public");
+const PUBLIC_PATH = path.join(process.cwd(), "public");
 
 /* ================= MIDDLEWARE ================= */
 
-app.use(cors({ origin: "*" }));
-app.use(express.json());
+app.use(cors());
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
@@ -31,19 +30,21 @@ app.use(morgan("dev"));
 
 /* ================= FRONTEND ================= */
 
+// serve static files
 app.use(express.static(PUBLIC_PATH));
 
+// fallback to index.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(PUBLIC_PATH, "index.html"));
 });
 
-/* ================= EMAIL SETUP ================= */
+/* ================= EMAIL SYSTEM ================= */
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // app password
+    pass: process.env.EMAIL_PASS,
   },
 });
 
@@ -53,72 +54,88 @@ app.post("/pay", async (req, res) => {
   try {
     const { name, email, txn, amount } = req.body;
 
+    // validation
     if (!name || !email || !txn || !amount) {
-      return res.json({ success: false, error: "Missing fields" });
+      return res.status(400).json({
+        success: false,
+        error: "All fields required",
+      });
     }
 
-    console.log("💰 Payment Received:", req.body);
+    console.log("💰 Payment:", { name, email, txn, amount });
 
-    /* ===== EMAIL TEMPLATE ===== */
+    /* ================= RECEIPT HTML ================= */
 
-    const html = `
-    <div style="font-family:Arial;padding:20px;">
-      <h2>✅ Payment Confirmation</h2>
+    const receiptHTML = `
+    <div style="font-family:Arial;padding:25px;">
+      <h2 style="color:#22c55e;">Payment Successful ✅</h2>
+
       <p>Hi <b>${name}</b>,</p>
+      <p>Your subscription is now active.</p>
 
-      <p>Your payment has been successfully received.</p>
+      <hr/>
 
-      <table style="border-collapse:collapse;">
+      <table style="font-size:15px;">
         <tr><td><b>Amount:</b></td><td>₹${amount}</td></tr>
         <tr><td><b>Transaction ID:</b></td><td>${txn}</td></tr>
       </table>
 
-      <br>
+      <br/>
 
       <div style="background:#0f172a;color:white;padding:15px;border-radius:10px;">
         <h3>Talent O-S</h3>
         <p>Powered by DB Solutions</p>
       </div>
 
-      <p>Thank you for choosing us 🚀</p>
+      <p style="margin-top:20px;">We will contact you shortly.</p>
     </div>
     `;
 
-    /* ===== SEND EMAIL ===== */
+    /* ================= SEND EMAIL ================= */
 
     await transporter.sendMail({
       from: `"Talent OS" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Payment Successful - Talent OS",
-      html: html,
+      subject: "✅ Payment Confirmed - Talent OS",
+      html: receiptHTML,
     });
 
-    /* ===== WHATSAPP MESSAGE LINK ===== */
+    /* ================= WHATSAPP LINK ================= */
 
-    const whatsappMsg = `Payment Received ✅
+    const msg = `Hi, I have completed payment.
+
 Name: ${name}
 Amount: ₹${amount}
 TXN: ${txn}`;
 
-    const whatsappLink = `https://wa.me/91${process.env.ADMIN_NUMBER}?text=${encodeURIComponent(
-      whatsappMsg
-    )}`;
+    const whatsappLink = `https://wa.me/91${
+      process.env.ADMIN_NUMBER
+    }?text=${encodeURIComponent(msg)}`;
+
+    /* ================= RESPONSE ================= */
 
     res.json({
       success: true,
-      message: "Payment processed",
+      message: "Payment successful",
       whatsapp: whatsappLink,
     });
-  } catch (err) {
-    console.error("❌ Error:", err);
-    res.json({ success: false, error: err.message });
+  } catch (error) {
+    console.error("❌ ERROR:", error.message);
+
+    res.status(500).json({
+      success: false,
+      error: "Server error",
+    });
   }
 });
 
-/* ================= TEST ================= */
+/* ================= HEALTH CHECK ================= */
 
-app.get("/api/test", (req, res) => {
-  res.json({ success: true, message: "API working ✅" });
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    status: "LIVE",
+  });
 });
 
 /* ================= 404 ================= */
